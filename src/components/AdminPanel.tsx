@@ -16,6 +16,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { Order, User, OrderStatus } from '../types';
+import { getOrders, getUsers, updateOrderStatus, sendMessage } from '../services/api';
 
 interface AdminPanelProps {
   lang: 'fa' | 'en';
@@ -47,12 +48,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [ordersRes, usersRes] = await Promise.all([
-        fetch(`/api/orders?status=${statusFilter}&search=${encodeURIComponent(searchQuery)}`),
-        fetch('/api/users'),
+      const [ordersData, usersData] = await Promise.all([
+        getOrders(statusFilter, searchQuery),
+        getUsers(),
       ]);
-      const ordersData = await ordersRes.json();
-      const usersData = await usersRes.json();
 
       if (ordersData.success) setOrders(ordersData.orders || []);
       if (usersData.success) setUsers(usersData.users || []);
@@ -84,19 +83,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
     if (!selectedOrder) return;
     setIsUpdating(true);
     try {
-      const res = await fetch(`/api/orders/${selectedOrder.id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: newStatus,
-          admin_notes: adminNotes,
-          notify_client: notifyClient,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
+      const data = await updateOrderStatus(
+        selectedOrder.id,
+        newStatus,
+        adminNotes,
+        notifyClient
+      );
+      if (data.success && data.order) {
         setSelectedOrder(data.order);
-        setOrders((prev) => prev.map((o) => (o.id === data.order.id ? data.order : o)));
+        setOrders((prev) => prev.map((o) => (o.id === data.order!.id ? data.order! : o)));
         setMessageSuccess(lang === 'fa' ? 'وضعیت با موفقیت بروزرسانی شد.' : 'Status updated successfully.');
         setTimeout(() => setMessageSuccess(''), 3000);
       }
@@ -113,17 +108,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ lang, onLogout }) => {
 
     setIsSendingMessage(true);
     try {
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          order_id: selectedOrder.id,
-          to_telegram_id: selectedOrder.telegram_id,
-          text: directMessage.trim(),
-          from_admin: true,
-        }),
-      });
-      const data = await res.json();
+      const data = await sendMessage(
+        selectedOrder.id,
+        directMessage.trim(),
+        true,
+        selectedOrder.telegram_id
+      );
       if (data.success) {
         setDirectMessage('');
         setMessageSuccess(lang === 'fa' ? 'پیام به کاربر در تلگرام ارسال شد.' : 'Message dispatched to Telegram user.');

@@ -16,6 +16,7 @@ import {
   Search,
 } from 'lucide-react';
 import { Order, AuthUser, OrderStatus, ProjectType } from '../types';
+import { clientLogin, clientRegister, getClientOrders } from '../services/api';
 
 interface ClientPortalProps {
   lang: 'fa' | 'en';
@@ -51,19 +52,7 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
   const fetchClientOrders = async (userObj?: AuthUser | null, queryCode?: string) => {
     setLoadingOrders(true);
     try {
-      let url = '';
-      if (queryCode) {
-        url = `/api/orders?search=${encodeURIComponent(queryCode.trim())}`;
-      } else if (userObj) {
-        url = `/api/client/my-orders?userId=${userObj.id}&username=${encodeURIComponent(userObj.username)}`;
-      } else {
-        setOrders([]);
-        setLoadingOrders(false);
-        return;
-      }
-
-      const res = await fetch(url);
-      const data = await res.json();
+      const data = await getClientOrders(userObj, queryCode);
       if (data.success) {
         setOrders(data.orders || []);
       }
@@ -86,16 +75,11 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
     setIsSubmitting(true);
 
     try {
-      const res = await fetch('/api/auth/client-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password: password.trim() }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const data = await clientLogin(username.trim(), password.trim());
+      if (data.success && data.user) {
         onLogin(data.user);
       } else {
-        setErrorMsg(data.message || (lang === 'fa' ? 'نام کاربری یا رمز عبور اشتباه است.' : 'Login failed.'));
+        setErrorMsg(data.error || (lang === 'fa' ? 'نام کاربری یا رمز عبور اشتباه است.' : 'Login failed.'));
       }
     } catch (e) {
       setErrorMsg(lang === 'fa' ? 'خطا در ارتباط با سرور.' : 'Server connection error.');
@@ -121,20 +105,11 @@ export const ClientPortal: React.FC<ClientPortalProps> = ({
     }
 
     try {
-      const res = await fetch('/api/auth/client-register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: username.trim(),
-          password: password.trim(),
-          full_name: fullName.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const data = await clientRegister(username.trim(), password.trim(), fullName.trim());
+      if (data.success && data.user) {
         onLogin(data.user);
       } else {
-        setErrorMsg(data.message || (lang === 'fa' ? 'خطا در ثبت نام.' : 'Registration failed.'));
+        setErrorMsg(data.error || (lang === 'fa' ? 'خطا در ثبت نام.' : 'Registration failed.'));
       }
     } catch (e) {
       setErrorMsg(lang === 'fa' ? 'خطا در اتصال به سرور.' : 'Server connection error.');

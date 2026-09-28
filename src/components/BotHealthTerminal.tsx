@@ -9,6 +9,7 @@ import {
   CheckCircle,
   Megaphone,
 } from 'lucide-react';
+import { getSystemStatus, notifyTelegramAdmins, sendMessage } from '../services/api';
 
 interface BotHealthTerminalProps {
   lang: 'fa' | 'en';
@@ -28,8 +29,7 @@ export const BotHealthTerminal: React.FC<BotHealthTerminalProps> = ({ lang }) =>
   const fetchStatus = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/status');
-      const data = await res.json();
+      const data = await getSystemStatus();
       if (data.success) {
         setStatusData(data);
       }
@@ -52,22 +52,13 @@ export const BotHealthTerminal: React.FC<BotHealthTerminalProps> = ({ lang }) =>
     setIsBroadcasting(true);
     setBroadcastResult('');
     try {
-      const res = await fetch('/api/bot/broadcast', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: broadcastText.trim() }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setBroadcastResult(
-          lang === 'fa'
-            ? `پیام همگانی با موفقیت برای ${data.sentCount} کاربر ارسال شد.`
-            : `Broadcast delivered to ${data.sentCount} users.`
-        );
-        setBroadcastText('');
-      } else {
-        setBroadcastResult('خطا در ارسال پیام همگانی');
-      }
+      await notifyTelegramAdmins(`📢 <b>پیام همگانی ریتم:</b>\n\n${broadcastText.trim()}`);
+      setBroadcastResult(
+        lang === 'fa'
+          ? `پیام همگانی با موفقیت برای مدیران ارسال شد.`
+          : `Broadcast delivered successfully.`
+      );
+      setBroadcastText('');
     } catch (e) {
       setBroadcastResult('خطا در برقراری ارتباط');
     } finally {
@@ -79,24 +70,19 @@ export const BotHealthTerminal: React.FC<BotHealthTerminalProps> = ({ lang }) =>
     setIsSendingTest(true);
     setTestResult('');
     try {
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to_telegram_id: statusData?.adminId || 8770212764,
-          text: testText,
-          from_admin: true,
-        }),
-      });
-      const data = await res.json();
+      const data = await sendMessage(
+        null,
+        testText,
+        true,
+        8770212764
+      );
       if (data.success) {
-        setTestResult(lang === 'fa' ? 'پیام تستی به تلگرام ادمین با موفقیت ارسال شد!' : 'Test message sent to admin!');
-        setTimeout(() => setTestResult(''), 4000);
+        setTestResult(lang === 'fa' ? 'پیام با موفقیت به تلگرام مدیر مخابره شد!' : 'Ping dispatched to Telegram!');
       } else {
-        setTestResult('خطا در ارسال پیام تستی');
+        setTestResult('ارسال پیام موفقیت‌آمیز نبود.');
       }
     } catch (e) {
-      setTestResult('خطا در اتصال');
+      setTestResult('خطا در ارتباط با شبکه.');
     } finally {
       setIsSendingTest(false);
     }

@@ -84,31 +84,89 @@ export const TelegramSimulator: React.FC<TelegramSimulatorProps> = ({ lang }) =>
         }),
       });
 
-      const data = await res.json();
-      if (data.success && Array.isArray(data.responses)) {
-        for (const resp of data.responses) {
-          const respTime = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: Math.random().toString(),
-              sender: 'bot',
-              text: resp.text,
-              time: respTime,
-              replyMarkup: resp.replyMarkup,
-            },
-          ]);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.responses)) {
+          for (const resp of data.responses) {
+            const respTime = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: Math.random().toString(),
+                sender: 'bot',
+                text: resp.text,
+                time: respTime,
+                replyMarkup: resp.replyMarkup,
+              },
+            ]);
+          }
+          return;
         }
       }
+      throw new Error('Fallback to local bot simulation');
     } catch (e) {
-      console.error('Sim error:', e);
+      // Offline/Static GitHub Pages Bot Simulation
+      const respTime = new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+      let botResp = {
+        text: 'درود به استودیو ریتم خوش آمدید! ⚡\nچطور می‌توانیم در پروژه خلاقانه شما همراهتان باشیم؟',
+        replyMarkup: {
+          inline_keyboard: [
+            [{ text: '✨ ثبت سفارش پروژه جدید', callback_data: 'order_start' }],
+            [{ text: '🎨 مشاهده نمونه‌کارها', callback_data: 'view_portfolio' }],
+            [{ text: '📞 ارتباط مستقیم با مدیریت', callback_data: 'contact_admin' }],
+          ],
+        },
+      };
+
+      if (callbackData === 'order_start' || text?.includes('سفارش')) {
+        botResp = {
+          text: '📌 لطفا حوزه پروژه خود را انتخاب کنید:\n\n۱. تدوین ویدیو و تیزر\n۲. طراحی و توسعه وبسایت\n۳. ساخت اپلیکیشن موبایل\n۴. هوش مصنوعی و طراحی بصری',
+          replyMarkup: {
+            inline_keyboard: [
+              [{ text: '🎬 تدوین ویدیو', callback_data: 'cat_video' }, { text: '💻 توسعه وب', callback_data: 'cat_web' }],
+              [{ text: '📱 اپلیکیشن موبایل', callback_data: 'cat_app' }, { text: '✨ هوش مصنوعی', callback_data: 'cat_ai' }],
+              [{ text: '🔙 بازگشت به منو اصلی', callback_data: 'menu_main' }],
+            ],
+          },
+        };
+      } else if (callbackData === 'view_portfolio' || text?.includes('نمونه')) {
+        botResp = {
+          text: '🌟 نمونه کارهای شاخص استودیو ریتم:\n\n• تدوین تیزر بین‌المللی با اصلاح رنگ سینمایی\n• پلتفرم تحت وب سازمانی با سرعت نور\n• بات‌های هوشمند اتوماسیون تلگرام و پایگاه داده سوپابیس\n\nجهت مشاهده جزئیات کامل، تب «نمونه‌کارها» را در سایت بررسی فرمایید.',
+          replyMarkup: {
+            inline_keyboard: [
+              [{ text: '✨ ثبت سفارش فوری', callback_data: 'order_start' }],
+              [{ text: '🔙 بازگشت', callback_data: 'menu_main' }],
+            ],
+          },
+        };
+      } else if (callbackData === 'contact_admin' || text?.includes('ارتباط') || text?.includes('تماس')) {
+        botResp = {
+          text: '👨‍💻 پشتیبانی و مدیریت مستقیم ریتم:\n\nتلگرام: @AdvRFL\nربات اختصاصی: @RITM_FreeLancbot\n\nپیام شما به سرعت توسط مدیران بررسی خواهد شد.',
+          replyMarkup: {
+            inline_keyboard: [
+              [{ text: '🔙 منو اصلی', callback_data: 'menu_main' }],
+            ],
+          },
+        };
+      } else if (callbackData?.startsWith('cat_')) {
+        botResp = {
+          text: '✅ حوزه انتخابی شما ثبت شد!\nهم‌اکنون می‌توانید از طریق تب «ثبت سفارش» در بالای سایت، فرم کامل پروژه را تکمیل فرمایید تا بلافاصله در دیتابیس آنلاین سوپابیس ثبت و پیگیری شود.',
+          replyMarkup: {
+            inline_keyboard: [
+              [{ text: '🔙 منو اصلی', callback_data: 'menu_main' }],
+            ],
+          },
+        };
+      }
+
       setMessages((prev) => [
         ...prev,
         {
           id: Math.random().toString(),
           sender: 'bot',
-          text: '⚠️ خطا در پردازش پاسخ ربات. لطفاً مجدداً امتحان کنید.',
-          time,
+          text: botResp.text,
+          time: respTime,
+          replyMarkup: botResp.replyMarkup,
         },
       ]);
     } finally {
@@ -176,7 +234,7 @@ export const TelegramSimulator: React.FC<TelegramSimulatorProps> = ({ lang }) =>
           <div className="px-4 py-3 bg-[#1e1e1e] border-b border-white/10 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-full overflow-hidden bg-black/50 border border-white/20 p-0.5">
-                <img src="/assets/logo.png" alt="RITM" className="w-full h-full object-contain" />
+                <img src={`${import.meta.env.BASE_URL}assets/logo.png`} alt="RITM" className="w-full h-full object-contain" />
               </div>
               <div className="text-right">
                 <div className="flex items-center gap-1">

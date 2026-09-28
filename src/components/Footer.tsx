@@ -12,7 +12,7 @@ export const Footer: React.FC<FooterProps> = ({ lang }) => {
         {/* Brand Lockup */}
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded-full overflow-hidden bg-white/5 border border-white/10 p-0.5 flex items-center justify-center">
-            <img src="/assets/logo.png" alt="RITM" className="w-full h-full object-contain" />
+            <img src={`${import.meta.env.BASE_URL}assets/logo.png`} alt="RITM" className="w-full h-full object-contain" />
           </div>
           <span className="text-[#e5e2e1] font-semibold">
             {lang === 'fa' ? 'ریتم — استودیو خلاقیت دیجیتال' : 'RITM — Digital Creative Agency'}

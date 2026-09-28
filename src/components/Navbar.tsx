@@ -35,7 +35,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-2.5 cursor-pointer select-none group"
           >
             <div className="w-8 h-8 rounded-full overflow-hidden border border-white/20 bg-black/40 flex items-center justify-center p-0.5 group-hover:border-[#d0bcff]/60 transition-colors">
-              <img src="/assets/logo.png" alt="RITM" className="w-full h-full object-contain" />
+              <img src={`${import.meta.env.BASE_URL}assets/logo.png`} alt="RITM" className="w-full h-full object-contain" />
             </div>
             <span className="text-xl font-bold tracking-tight text-[#e5e2e1] group-hover:text-[#d0bcff] transition-colors">
               {lang === 'fa' ? 'ریتم' : 'RITM'}
