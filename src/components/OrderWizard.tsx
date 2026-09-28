@@ -14,6 +14,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { ProjectType, Order, AuthUser } from '../types';
+import { createOrder } from '../services/api';
 
 interface OrderWizardProps {
   lang: 'fa' | 'en';
@@ -191,25 +192,20 @@ export const OrderWizard: React.FC<OrderWizardProps> = ({
     const finalBudget = budget === 'custom' ? (customBudget || 'توافقی') : budget;
 
     try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          full_name: fullName.trim(),
-          contact: contact.trim(),
-          contact_type: contactType,
-          project_type: projectType,
-          budget: finalBudget,
-          deadline,
-          description: description.trim(),
-          telegram_id: telegramId ? parseInt(telegramId, 10) : 0,
-          username: username.replace(/^@/, '') || null,
-        }),
+      const data = await createOrder({
+        full_name: fullName.trim(),
+        contact: contact.trim(),
+        contact_type: contactType,
+        project_type: projectType,
+        budget: finalBudget,
+        deadline,
+        description: description.trim(),
+        telegram_id: telegramId ? parseInt(telegramId, 10) : 0,
+        username: username.replace(/^@/, '') || null,
       });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'خطا در ثبت سفارش');
+      if (!data.success || !data.order) {
+        throw new Error(data.error || 'خطا در ثبت سفارش');
       }
 
       setSubmittedOrder(data.order);

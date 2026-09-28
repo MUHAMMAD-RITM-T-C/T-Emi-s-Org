@@ -16,6 +16,8 @@ import { Footer } from './components/Footer';
 import { ProjectType, Order, AuthUser } from './types';
 import { Send, Shield, Lock, CheckCircle2, X } from 'lucide-react';
 
+import { getOrders } from './services/api';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<'order' | 'simulator' | 'admin' | 'portfolio' | 'status' | 'client'>(() => {
     try {
@@ -74,8 +76,7 @@ export default function App() {
   useEffect(() => {
     const checkPending = async () => {
       try {
-        const res = await fetch('/api/orders?status=new');
-        const data = await res.json();
+        const data = await getOrders('new');
         if (data.success && Array.isArray(data.orders)) {
           setPendingCount(data.orders.length);
         }

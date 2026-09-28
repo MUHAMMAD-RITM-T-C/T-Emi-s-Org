@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Shield, KeyRound, ArrowLeft, ArrowRight, Lock, CheckCircle2 } from 'lucide-react';
+import { adminLogin } from '../services/api';
 
 interface AdminLoginProps {
   lang: 'fa' | 'en';
@@ -23,20 +24,15 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ lang, onLoginSuccess, on
 
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/admin-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: password.trim() }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      const data = await adminLogin(password.trim());
+      if (data.success && data.token) {
         localStorage.setItem('ritm_admin_token', data.token);
         onLoginSuccess(data.token);
       } else {
-        setError(data.message || (lang === 'fa' ? 'رمز عبور مدیریت نادرست است.' : 'Invalid admin password.'));
+        setError(data.error || (lang === 'fa' ? 'رمز عبور مدیریت نادرست است.' : 'Invalid admin password.'));
       }
     } catch (err: any) {
-      setError(lang === 'fa' ? 'خطا در ارتباط با سرور.' : 'Server connection error.');
+      setError(lang === 'fa' ? 'خطا در ارتباط.' : 'Connection error.');
     } finally {
       setLoading(false);
     }
