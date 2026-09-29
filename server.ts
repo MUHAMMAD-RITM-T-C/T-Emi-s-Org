@@ -866,6 +866,39 @@ async function startTelegramPoller() {
 // Start polling in background
 startTelegramPoller();
 
+// --- TELEGRAM WEBHOOK ROUTE (For serverless platforms like Vercel/Glitch) ---
+app.post('/api/telegram-webhook', async (req: Request, res: Response) => {
+  try {
+    const update = req.body;
+    if (update?.message) {
+      const msg = update.message;
+      await handleBotIncoming({
+        chatId: msg.chat.id,
+        userId: msg.from.id,
+        text: msg.text || '',
+        username: msg.from.username,
+        firstName: msg.from.first_name,
+        lastName: msg.from.last_name,
+      });
+    } else if (update?.callback_query) {
+      const cb = update.callback_query;
+      await callTelegram('answerCallbackQuery', { callback_query_id: cb.id });
+      await handleBotIncoming({
+        chatId: cb.message?.chat?.id || cb.from.id,
+        userId: cb.from.id,
+        callbackData: cb.data,
+        username: cb.from.username,
+        firstName: cb.from.first_name,
+        lastName: cb.from.last_name,
+      });
+    }
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error('Webhook error:', err);
+    return res.status(500).json({ error: String(err) });
+  }
+});
+
 // --- AUTHENTICATION & ACCESS CONTROL CONSTANTS ---
 const ADMIN_SECRET = 'Mohmah123';
 const ADMIN_TOKEN = 'ritm_admin_token_mohmah123';
