@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: ritm-order-bot
+    env: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TELEGRAM_BOT_TOKEN
+        value: 8933995842:AAEe4N1I4FM3yspFyY85bjN87njJ1lZr6qY
+      - key: ADMIN_TELEGRAM_ID
+        value: "8770212764"
+      - key: SUPABASE_URL
+        value: https://kydrkdyxfcavsfkinusp.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5ZHJrZHl4ZmNhdnNma2ludXNwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDU5Nzk1OCwiZXhwIjoyMTA2MTczOTU4fQ.EJLK_9jKeX9sXogTgZSJbZn6yfoxRTUkKLidlo5QFYY
